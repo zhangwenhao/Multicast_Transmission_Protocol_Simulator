@@ -15,13 +15,15 @@ clusterParameter = 0.3;
 
 loop = true;
 
-warden = [0, 0];
+warden = [0, 75];
+%warden = [0, -50];
+%warden = [0, -70];
 
 % Plotting the initial state
-plot_gu(warden, data, radius);
+%plot_gu(warden, data, radius);
 
 % Radius for guard zone
-r_w = 100;
+r_w = 150;
 
 % Perform K-means++ clustering
 [idx, ctr, wdx] = group_k_means(data, warden, r_w);
@@ -63,11 +65,9 @@ beta = fun_db_to_math(-40);
 p1 = 0.5; 
 
 TOTAL_TIME_KMEANS = zeros(1, k_kmeans + g_kmeans, 'double');
-SIM_TIME_KMEANS = zeros(1, k_kmeans + g_kmeans, 'double');
 num_time_KMEANS = zeros(1, k_kmeans + g_kmeans, 'double');
 
 TOTAL_TIME_MBS = zeros(1, k_mbs + g_mbs, 'double');
-SIM_TIME_MBS = zeros(1, k_mbs + g_mbs, 'double');
 num_time_MBS = zeros(1, k_mbs + g_mbs, 'double');
 
 % covertness constraint
@@ -86,8 +86,6 @@ for i = 1:g_kmeans
     R_eta_k = eta_k(gamma_ak);
     R_C_k = C_k(R_eta_k);
     TOTAL_TIME_KMEANS(i) = M / (p1 * R_C_k);
-    m_block = ceil(M / R_C_k);
-    SIM_TIME_KMEANS(i) = transmission_sim(m_block, p1);
     num_time_KMEANS(i) = i;
 end
 
@@ -100,8 +98,6 @@ for j = 1:k_kmeans
     R_eta_k = eta_k(gamma_ak);
     R_C_k = C_k(R_eta_k);
     TOTAL_TIME_KMEANS(j + g_kmeans) = M / (p1 * R_C_k);
-    m_block = ceil(M / R_C_k);
-    SIM_TIME_KMEANS(j + g_kmeans) = transmission_sim(m_block, p1);
     num_time_KMEANS(j + g_kmeans) = j + g_kmeans;
 end
 
@@ -114,8 +110,6 @@ for i = 1:g_mbs
     R_eta_k = eta_k(gamma_ak);
     R_C_k = C_k(R_eta_k);
     TOTAL_TIME_MBS(i) = M / (p1 * R_C_k);
-    m_block = ceil(M / R_C_k);
-    SIM_TIME_MBS(i) = transmission_sim(m_block, p1);
     num_time_MBS(i) = i;
 end
 
@@ -128,106 +122,29 @@ for j = 1:k_mbs
     R_eta_k = eta_k(gamma_ak);
     R_C_k = C_k(R_eta_k);
     TOTAL_TIME_MBS(j + g_mbs) = M / (p1 * R_C_k);
-    m_block = ceil(M / R_C_k);
-    SIM_TIME_MBS(j + g_mbs) = transmission_sim(m_block, p1);
     num_time_MBS(j + g_mbs) = j + g_mbs;
 end
 
 % Plot results for K-means++ clustering
 figure(1); 
-barWidth = 0.4;
-b1=bar(num_time_KMEANS - barWidth/2, TOTAL_TIME_KMEANS, barWidth, 'FaceColor', '#DBE0E9', 'EdgeColor', 'k'); 
-hold on;
-b2=bar(num_time_KMEANS + barWidth/2, SIM_TIME_KMEANS, barWidth, 'FaceColor', 'w', 'EdgeColor', 'k'); 
-
+barWidth = 0.5;
+b1=bar(num_time_KMEANS, TOTAL_TIME_KMEANS, barWidth, 'FaceColor', 'k', 'EdgeColor', 'k'); 
 xlabel('Serial number of MG');
 ylabel('Transmission time (ms)');
 xticks(1:1:g_kmeans + k_kmeans);
-legend('theoretical results', 'simulation results', 'Location', 'northeast');
+legend('theoretical results', 'Location', 'northeast');
 box on;
 grid on;
 hold off;
-labels1 = compose('%.4f', TOTAL_TIME_KMEANS);
-labels2 = compose('%.4f', SIM_TIME_KMEANS);
-labels3 = compose('%.4f', TOTAL_TIME_KMEANS-SIM_TIME_KMEANS);
-%% 添加数值标签
-x1 = b1.XEndPoints;
-y1 = b1.YEndPoints;
-
-x2 = b2.XEndPoints;
-y2 = b2.YEndPoints;
-for i = 1:length(x1)
-
-    % ===== b1 =====
-    if i <= 2
-        % 柱内
-        text(x1(i), y1(i)*0.85, labels1(i), ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle', ...
-            'Rotation', 270);
-    else
-        % 柱外
-        text(x1(i), y1(i)+290000, labels1(i), ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle', ...
-            'Rotation', 270);
-    end
-
-    % ===== b2 =====
-    if i <= 2
-        text(x2(i), y2(i)*0.85, labels2(i), ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle', ...
-            'Rotation', 270, ...
-            'Color', 'k');
-    else
-        text(x2(i), y2(i)+290000, labels2(i), ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle', ...
-            'Rotation', 270);
-    end
-end
-
-
-
 
 % Plot results for MBS
 figure(2); 
-barWidth = 0.4;
-b3=bar(num_time_MBS - barWidth/2, TOTAL_TIME_MBS, barWidth, 'FaceColor', 'k', 'EdgeColor', 'k'); 
-hold on;
-b4=bar(num_time_MBS + barWidth/2, SIM_TIME_MBS, barWidth, 'FaceColor', 'white', 'EdgeColor', 'k');
-
+barWidth = 0.5;
+b3=bar(num_time_MBS, TOTAL_TIME_MBS, barWidth, 'FaceColor', 'k', 'EdgeColor', 'k'); 
 xlabel('Serial number of MG');
 ylabel('Transmission time (ms)');
 xticks(1:1:g_mbs + k_mbs);
-legend('theoretical results', 'simulation results', 'Location', 'northeast');
+legend('theoretical results', 'Location', 'northeast');
 box on;
 grid on;
 hold off;
-
-
-text(b3.XEndPoints, b3.YEndPoints, string(TOTAL_TIME_MBS), ...
-    'HorizontalAlignment', 'center', ...
-    'VerticalAlignment', 'bottom');
-
-text(b4.XEndPoints, b4.YEndPoints, string(SIM_TIME_MBS), ...
-    'HorizontalAlignment', 'center', ...
-    'VerticalAlignment', 'bottom');
-
-% Function for simulating transmission time
-function sim_time = transmission_sim(m, p_1)  
-    sim_time = 0;
-    initial_m = m;
-    for i = 1:10000
-        m = initial_m;
-        while m > 0
-            sim_time = sim_time + 1;
-            randomNumber = rand;
-            if randomNumber >= p_1
-                m = m - 1 ;
-            end
-        end  
-    end
-    sim_time = sim_time / 10000;
-end
